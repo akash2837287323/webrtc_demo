@@ -3,11 +3,21 @@ const app = express();
 const bodyParser = require('body-parser');
 const webrtc = require("wrtc");
 const cors = require('cors');
-const fs = require('fs');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
-const ffmpeg = require('fluent-ffmpeg')
+const ffmpeg = require('fluent-ffmpeg');
 ffmpeg.setFfmpegPath(ffmpegPath);
-const w2f = require('wrtc-to-ffmpeg')(webrtc)
+var path = require('path')
+const w2f = require('wrtc-to-ffmpeg')(webrtc);
+const multer = require('multer');
+var storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, 'uploads/')
+    },
+    filename: function (req, file, cb) {
+      cb(null, Date.now() + path.extname(file.originalname))
+    }
+  })
+const upload = multer({ storage: storage });
 
 let senderStream;
 
@@ -58,30 +68,12 @@ app.post("/consumer", async ({ body }, res) => {
     res.json(payload);
 });
 
+app.post("/upload", upload.single('file'), async(req, res) => {
+    
+})
+
 async function handleTrackEvent(e, peer) {
     senderStream = e.streams[0];
-
-    var track = senderStream.getVideoTracks()[0];
-
-    if (track) {
-        const input = await w2f.input(track)
-        
-        var f = ffmpeg().input(input.url)
-            .inputOptions(input.options)
-            .on('start', function () {
-                console.log("START")
-            })
-            .on('error', function (err) {
-                console.log('An error occurred: ' + err.message);
-            })
-            .on('end', function () {
-                console.log('Processing finished !');
-            })
-            .output(`./public/${Date.now()}.mkv`)
-            .run();
-
-        console.log("HERE WE GO")
-    }
 }
 
 app.listen(5000, () => console.log('server started'));
