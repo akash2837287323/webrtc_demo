@@ -1,13 +1,10 @@
+require('dotenv').config()
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const webrtc = require("wrtc");
 const cors = require('cors');
-const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
-const ffmpeg = require('fluent-ffmpeg');
-ffmpeg.setFfmpegPath(ffmpegPath);
 var path = require('path')
-const w2f = require('wrtc-to-ffmpeg')(webrtc);
 const multer = require('multer');
 var storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -69,11 +66,11 @@ app.post("/consumer", async ({ body }, res) => {
 });
 
 app.post("/upload", upload.single('file'), async(req, res) => {
-    
+    res.send('File uploaded successfully.')
 })
 
 async function handleTrackEvent(e, peer) {
     senderStream = e.streams[0];
 }
 
-app.listen(5000, () => console.log('server started'));
+app.listen(process.env.PORT, () => console.log('server started'));
