@@ -1,18 +1,8 @@
-let recorder;
-
-const socket = io('http://localhost:8000');
-
-socket.on('connect', () => {
-    console.log('connected to socket io server');
-})
+let recorder, roomId;
 
 window.onload = () => {
     document.getElementById('start-streaming-button').onclick = () => {
-        const roomId = document.getElementById("fname").value
-        const payload = {
-            roomId: roomId
-        }
-        socket.emit('joinRoom', payload)
+        roomId = document.getElementById("fname").value
         init();
     }
 
@@ -58,10 +48,11 @@ async function handleNegotiationNeededEvent(peer) {
     const offer = await peer.createOffer();
     await peer.setLocalDescription(offer);
     const payload = {
-        sdp: peer.localDescription
+        sdp: peer.localDescription,
+        roomId: roomId
     };
 
-    const { data } = await axios.post('http://localhost:5001/broadcast', payload);
+    const { data } = await axios.post(' https://ff7d-115-245-201-22.ngrok-free.app/broadcast', payload);
     const desc = new RTCSessionDescription(data.sdp);
     peer.setRemoteDescription(desc).catch(e => console.log(e));
 }
@@ -80,7 +71,7 @@ async function stopRecording() {
     })
 
     try {
-        const response = await axios.post('http://localhost:5001/upload', formData);
+        const response = await axios.post(' https://ff7d-115-245-201-22.ngrok-free.app/upload', formData);
         console.log('File uploaded successfully:', response.data);
     } catch (error) {
         console.error('Error uploading file:', error);

@@ -4,29 +4,25 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import wrtc from 'wrtc';
 import cors from 'cors';
-import { createServer } from 'http';
-import { Server } from "socket.io";
 import path from 'path';
 import multer from 'multer';
 
 const PORT = process.env.PORT || 5001;
-const SOCKET_PORT = process.env.SOCKET_PORT || 8000;
 
 const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, './uploads/');
-    },
-    filename: function (req, file, cb) {
-      cb(null, Date.now() + path.extname(file.originalname));
-    }
-  });
+  destination: function (req, file, cb) {
+    cb(null, './uploads/');
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
 const upload = multer({ storage: storage });
 
 const app = express();
-const server = createServer(app);
-const io = new Server(server);
 
 let senderStream;
+let senderStreamsMap = new Map();
 
 app.use(cors({
   origin: "*"
@@ -52,6 +48,7 @@ app.post('/broadcast', async (req, res) => {
   const payload = {
     sdp: peer.localDescription
   };
+  addSenderStream(body.roomId, senderStream)
 
   res.json(payload);
 });
@@ -67,7 +64,13 @@ app.post("/consumer", async (req, res) => {
   });
   const desc = new wrtc.RTCSessionDescription(body.sdp);
   await peer.setRemoteDescription(desc);
-  senderStream.getTracks().forEach(track => peer.addTrack(track, senderStream));
+  const stream = getSenderStream(body.roomId);
+
+  if (!stream) return res.json({ msg: "No stream found" });
+
+  stream.getTracks().forEach(track => {
+    peer.addTrack(track, senderStream);
+  });
   const answer = await peer.createAnswer();
   await peer.setLocalDescription(answer);
   const payload = {
@@ -85,15 +88,12 @@ async function handleTrackEvent(e, peer) {
   senderStream = e.streams[0];
 }
 
-io.on('connection', (socket) => {
-  console.log('a user connected');
-  
-  socket.on("joinRoom", (data) => {
-    const roomId = data.roomId;
-    socket.join(roomId);
-  })
-});
+function addSenderStream(roomId, stream) {
+  senderStreamsMap.set(roomId, stream);
+}
+
+function getSenderStream(roomId) {
+  return senderStreamsMap.get(roomId);
+}
 
 app.listen(PORT, () => console.log(`Server started at port --${PORT}`));
-
-server.listen(SOCKET_PORT, () => console.log(`Socket server started at port --${SOCKET_PORT}`));

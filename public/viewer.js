@@ -1,13 +1,9 @@
-const socket = io('http://localhost:8000');
+let roomId;
 
 window.onload = () => {
     document.getElementById('my-button').onclick = () => {
-        const roomId = document.getElementById("fname").value;
-        const payload = {
-            roomId: roomId
-        };
-        console.log('payload', payload);
-        socket.emit('joinRoom', payload);
+        roomId = document.getElementById("fname").value;
+        console.log('roomId', roomId)
         init();
     }
 }
@@ -15,6 +11,7 @@ window.onload = () => {
 async function init() {
     const peer = createPeer();
     peer.addTransceiver("video", { direction: "recvonly" });
+    peer.addTransceiver("audio", { direction: "recvonly" })
 }
 
 function createPeer() {
@@ -35,10 +32,11 @@ async function handleNegotiationNeededEvent(peer) {
     const offer = await peer.createOffer();
     await peer.setLocalDescription(offer);
     const payload = {
-        sdp: peer.localDescription
+        sdp: peer.localDescription,
+        roomId: roomId
     };
 
-    const { data } = await axios.post('http://localhost:5001/consumer', payload);
+    const { data } = await axios.post(' https://ff7d-115-245-201-22.ngrok-free.app/consumer', payload);
     const desc = new RTCSessionDescription(data.sdp);
     peer.setRemoteDescription(desc).catch(e => console.log(e));
 }
