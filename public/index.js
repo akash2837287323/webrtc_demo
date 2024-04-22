@@ -1,7 +1,18 @@
 let recorder;
 
+const socket = io('http://localhost:8000');
+
+socket.on('connect', () => {
+    console.log('connected to socket io server');
+})
+
 window.onload = () => {
     document.getElementById('start-streaming-button').onclick = () => {
+        const roomId = document.getElementById("fname").value
+        const payload = {
+            roomId: roomId
+        }
+        socket.emit('joinRoom', payload)
         init();
     }
 
@@ -10,8 +21,10 @@ window.onload = () => {
     }
 }
 
+let stream;
+
 async function init() {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
 
     recorder = new RecordRTCPromisesHandler(stream, {
         mimeType: 'video/webm'
@@ -62,11 +75,14 @@ async function stopRecording() {
     const formData = new FormData();
     formData.append('file', blob, filename);
 
+    stream.getTracks().forEach( track => {
+        track.stop();
+    })
+
     try {
         const response = await axios.post('http://localhost:5001/upload', formData);
         console.log('File uploaded successfully:', response.data);
     } catch (error) {
         console.error('Error uploading file:', error);
     }
-
 }

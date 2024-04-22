@@ -6,11 +6,15 @@
     <title>Document</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/RecordRTC/5.5.6/RecordRTC.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO" crossorigin="anonymous"></script>
     <script src='index.js'></script>
 </head>
 <body>
-    <button id='start-streaming-button'>Start Stream</button>
-    <button id='stop-streaming-button'>Stop Stream</button>
-    <video autoplay id="video"></video>
+    <label for="fname">Room</label>
+    <input type="text" id="fname" name="fname"><br><br>
+
+    <button id='start-streaming-button'>Start Live Stream</button>
+    <button id='stop-streaming-button'>Stop Live Stream</button>
+    <video autoplay id="video" muted="muted"></video>
 </body>
 </html>
